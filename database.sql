@@ -4,7 +4,7 @@ CREATE TABLE "User" (
 	password 		  		 text 		NOT NULL,
 	email 			   		 text 		NOT NULL,
 	phone_number 	   		 text,
-	credit_card_number 		 Integer  	NOT NULL,
+	credit_card_number 		 text  	NOT NULL,
 	address 		   		 text 		NOT NULL
 );
 
