@@ -1,0 +1,24 @@
+{
+  "name": "database-e-commerce-project",
+  "version": "1.0.0",
+  "description": "E-Commerce Database",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jwerbin95/Database-E-Commerce-Project.git"
+  },
+  "author": "Jacob Werbin",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jwerbin95/Database-E-Commerce-Project/issues"
+  },
+  "homepage": "https://github.com/jwerbin95/Database-E-Commerce-Project#readme",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "ejs": "^2.6.1",
+    "express": "^4.16.4"
+  }
+}
