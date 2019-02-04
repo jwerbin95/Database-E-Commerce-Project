@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Your Account</title>
+	<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+	<% for(let item in user){ %>
+		<p><%=item%> : <%=user[item]%></p>
+	<%}%>
+	<%- include('cart', {cartData})%>
+</body>
+</html>

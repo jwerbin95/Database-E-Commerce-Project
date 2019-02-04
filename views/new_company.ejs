@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>New Company</title>
+	<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+	<% if(error){ %>
+		<%- include('error'); %>
+	<% } %>
+	<h3>Create New Company</h3>
+	<form method="post">
+	  	<label for="companyName">Name Of Your Company:</label>
+	  	<input type="text" name="Company Name" id="companyName"><br>
+	  	<label for="description">Description:</label>
+	  	<input type="text" name="Description" id="description">
+	  	<button type="submit">Save Changes</button>
+	</form>
+</body>
+</html>

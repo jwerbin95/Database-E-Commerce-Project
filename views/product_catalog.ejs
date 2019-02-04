@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Catalog</title>
+	<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+	<% products.map(item=>{ %>
+		<p>Product Name: <%=item.pname%></p>
+		<p>Description: <%=item.description%></p>
+		<p>Price: <%=item.price%></p>
+		<p>Left In Stock: <%=item.stock%></p>
+		<p>Company: <%=item.cname%></p>
+		<button>Add To Cart</button>
+		<p>-----------------------------</p>
+	<% }) %>
+</body>
+</html>

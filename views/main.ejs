@@ -1,28 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>E-Commerce Backend</title>
+	<title>Shopping</title>
 	<link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-	<% if(error){ %>
-		<%- include('error'); %>
-	<% } %>
-	<h3>Create New User</h3>
-	<form method="post">
-	  	<label for="userName">Enter User Name:</label>
-	  	<input type="text" name="User Name" id="userName"><br>
-	  	<label for="password">Enter New Password:</label>
-	  	<input type="password" name="Password" id="password">
-	  	<label for="email">Enter Your Email Address:</label>
-	  	<input type="text" name="Email Address" id="email">
-	  	<label for="phone">Enter Your Phone Number:</label>
-	  	<input type="text" name="Phone Number" id="phone">
-	  	<label for="card">Enter Credit Card Number:</label>
-	  	<input type="password" name="Credit Card" id="card">
-	  	<label for="address">Enter Address:</label>
-	  	<input type="text" name="Address" id="address">
-	  	<button type="submit">Save Changes</button>
-	</form>
+	<h3>Shopping App</h3>
+	<a href="/new_user">Create An Account</a>
+	<a href="/product_catalog">Product Catalog</a>
+	<a href="/register_company">Register Your Company With Us</a>
+	<a href="/add_a_product">Add A New Product</a>
+	<a href="/login">Login</a>
 </body>
 </html>

@@ -4,7 +4,7 @@ CREATE TABLE "User" (
 	password 		  		 text 		NOT NULL,
 	email 			   		 text 		NOT NULL,
 	phone_number 	   		 text,
-	credit_card_number 		 text  	NOT NULL,
+	credit_card_number 		 text  		NOT NULL,
 	address 		   		 text 		NOT NULL
 );
 
@@ -26,8 +26,8 @@ CREATE TABLE Company(
 CREATE TABLE Product(
 	Product_ID 		   		 Serial 				PRIMARY KEY,
 	Company_FK 		   		 Integer  	NOT NULL,
-	Order_FK				 Integer 	NOT NULL,
-	Cart_FK					 Integer 	NOT NULL,
+	Order_FK				 Integer,
+	Cart_FK					 Integer,
 	name 			   		 text	    NOT NULL,
 	description 	   		 text,
 	price 			   		 Numeric,
@@ -38,8 +38,8 @@ CREATE TABLE Product(
 CREATE TABLE "Order"(
 	Order_ID 		   		 Serial 				PRIMARY KEY,
 	orderTime				 Timestamp,
-	Cart_FK 		   		 Integer  	NOT NULL,
-	History_FK 				 Integer 	NOT NULL,
+	Cart_FK 		   		 Integer,
+	History_FK 				 Integer,
 	FOREIGN KEY 	   		 (Cart_FK) 				REFERENCES Cart(Cart_ID),
 	FOREIGN KEY 	   		 (History_FK) 			REFERENCES Shopping_History(History_ID)
 );
