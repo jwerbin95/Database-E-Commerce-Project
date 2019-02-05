@@ -1,4 +1,7 @@
 <h3>Shopping Cart</h3>
-<% for(let item in cartData[0]){ %>
-	<p><%=item%> : <%=cartData[0][item]%></p>
+<%for(let i=0;i<cartData.length;i++){%>
+	<% for(let item in cartData[i]){ %>
+		<p><%=item%> : <%=cartData[i][item]%></p>
+	<%}%>
+	<p>-------------------------------</p>
 <%}%>

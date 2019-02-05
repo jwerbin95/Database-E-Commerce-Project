@@ -11,7 +11,10 @@
 		<p>Price: <%=item.price%></p>
 		<p>Left In Stock: <%=item.stock%></p>
 		<p>Company: <%=item.cname%></p>
-		<button>Add To Cart</button>
+		<form action="" method="post">
+			<input type="hidden" id="cartData" name="cartData" value=<%=item.product_id%>/>
+    		<input type="submit" />
+		</form>
 		<p>-----------------------------</p>
 	<% }) %>
 </body>

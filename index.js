@@ -12,9 +12,10 @@ const companyQuery =
 const productQuery =
 	'INSERT INTO "product" (name, company_fk, description, price) VALUES($1, $2, $3, $4) RETURNING *';
 const productsSelect =
-	'SELECT company.name as cname, product.name as pname, product.price, product.description, product.stock FROM product INNER JOIN company ON product.company_fk=company.company_id';
+	'SELECT product.product_id, company.name as cname, product.name as pname, product.price, product.description, product.stock FROM product INNER JOIN company ON product.company_fk=company.company_id';
 const PORT = 3000;
 
+const loggedIn = []
 let values = [];
 let app = express();
 let errorFlag = false;
@@ -59,6 +60,20 @@ app.get('/register_company', (request, response) => {
 app.get('/add_a_product', (request, response) => {
 	response.render('new_product', { error: errorFlag });
 });
+app.get('/user_account', (request, response)=>{
+	for(let user of loggedIn){
+		if(user.address===request.connection.remoteAddress){
+			const userQuery = `SELECT * FROM "User" WHERE user_id=${user.user_id}`
+			client
+				.query(userQuery)
+				.then(result=>{
+					let newCartData = getCartData(user.user_id).then(gcdresult=>{
+						response.render('user_account', {user: result.rows[0], cartData: gcdresult.rows})
+					})
+				})
+		}
+	}
+})
 
 app.post('/login', (request, response) => {
 	let credentials = login(
@@ -83,6 +98,7 @@ app.post('/login', (request, response) => {
 					.catch(error => {
 						response.send('Something Went Wrong :(');
 					});
+					loggedIn.push({address: request.connection.remoteAddress, user_id: result.rows[0].user_id})
 			}
 		})
 		.catch(error => {
@@ -92,7 +108,43 @@ app.post('/login', (request, response) => {
 			errorFlag = false;
 		});
 });
-
+app.post('/product_catalog', (request, response)=>{
+	let cartData = request.body['cartData']
+	let userId = null;
+	cartData = cartData.slice(0, -1);
+	const cartProductSelect = `SELECT * FROM product WHERE product_id=${cartData}`
+	for(let user of loggedIn){
+		if(user.address === request.connection.remoteAddress)
+			userId = user.user_id
+	}
+	client
+		.query(cartProductSelect)
+		.then(result=>{
+			let nextQuery = result
+			const userCartQuery = `SELECT cart_id FROM cart WHERE user_fk=${userId}`
+			client
+				.query(userCartQuery)
+				.then(result=>{
+					const addCartQuery = `INSERT INTO "cart_and_product" (product_fk, cart_fk) VALUES(${nextQuery.rows[0].product_id}, ${result.rows[0].cart_id})`
+					console.log(addCartQuery)
+					client
+						.query(addCartQuery)
+						.then(result=>{
+						//console.log(result)
+						response.redirect('/user_account')
+				})
+				.catch(error=>{
+					console.log(error.stack)
+					response.send("Something Went Wrong :(")
+				})
+			})
+				
+		})
+		.catch(error=>{
+			console.log(error.stack)
+			response.send("Something Went Wrong :(")
+		})
+})
 app.post('/add_a_product', (request, response) => {
 	readBody(request, response, productQuery, 'new_product');
 });
@@ -104,6 +156,31 @@ app.post('/new_user', (request, response) => {
 app.post('/register_company', (request, response) => {
 	readBody(request, response, companyQuery, 'new_company');
 });
+async function getCartData(userKey){
+	//console.log(userKey)
+	let promise = new Promise((resolve, reject)=>{
+	const cartQuery = `SELECT cart_id FROM cart WHERE user_fk=${userKey}`
+	client
+		.query(cartQuery)
+		.then(result=>{
+			let cart = result.rows[0].cart_id
+			const cartQuery = `SELECT product.cart_fk, product.company_fk, product.description, product.name, product.order_fk, product.price, product.product_id, product.stock FROM product INNER JOIN cart_and_product ON cart_and_product.product_fk=product.product_id WHERE cart_and_product.cart_fk=${cart}`
+		client
+			.query(cartQuery)
+			.then(result=>{
+				resolve(result)
+			})
+			.catch(error=>{
+				console.log(error.stack)
+			})
+		})
+		.catch(error=>{
+			console.log(error.stack)
+		})
+	})
+	let returnValue = await promise;
+	return returnValue
+}
 
 function login(userName, password) {
 	let userSelect = `SELECT user_id, user_name, email, phone_number, address FROM "User" WHERE user_name='${userName}' AND password='${password}'`;
