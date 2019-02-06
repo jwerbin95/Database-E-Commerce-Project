@@ -10,6 +10,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
 const { Client } = require('pg');
+const morgan = require('morgan')
+const fs = require('fs')
 //**********************************************************
 
 //**********************************************************
@@ -35,6 +37,7 @@ let values = [];
 let app = express();
 let errorFlag = false;
 let products = [];
+let accessLogStream = fs.createWriteStream(path.join(__dirname, 'server_log.log'), { flags: 'a' })
 //***********************************************************
 
 //***********************************************************
@@ -43,6 +46,7 @@ client.connect();
 
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(morgan('combined', { stream: accessLogStream }))
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '/views'));
