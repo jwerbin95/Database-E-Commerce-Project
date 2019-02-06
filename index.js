@@ -103,7 +103,28 @@ app.get('/user_account/logout', (request, response)=>{
 	}
 	response.redirect('/home')
 })
-
+app.get('/edit_profile', (request, response)=>{
+	response.render('edit_user')
+})
+app.post('/edit_profile', (request, response)=>{
+	for(let user of loggedIn){
+		if(user.address===request.connection.remoteAddress){
+			if(request.body['User Name']!=""){
+				let updateUser = `UPDATE "User" SET user_name='${request.body['User Name']}' WHERE user_id=${user.user_id}`
+				client
+					.query(updateUser)
+					.then(result=>{
+						console.log("Successfully updated user!")
+						response.redirect('/user_account')
+					})
+					.catch(error=>{
+						console.log(error.stack)
+						response.send("Something Went Wrong :(")
+					})
+			}
+		}
+	}
+})
 app.post('/login', (request, response) => {
 	let credentials = login(
 		request.body['User Name'],
@@ -122,6 +143,7 @@ app.post('/login', (request, response) => {
 						response.redirect('user_account');
 					})
 					.catch(error => {
+						console.log(error.stack)
 						response.send('Something Went Wrong :(');
 					});
 					loggedIn.push({address: request.connection.remoteAddress, user_id: result.rows[0].user_id})
@@ -147,12 +169,12 @@ app.post('/product_catalog', (request, response)=>{
 		.query(cartProductSelect)
 		.then(result=>{
 			let nextQuery = result
-			const userCartQuery = `SELECT cart_id FROM cart WHERE user_fk=${userId}`
+			const userCartQuery = `SELECT cart_fk FROM "User" WHERE user_id=${userId}`
 			client
 				.query(userCartQuery)
 				.then(result=>{
-					const addCartQuery = `INSERT INTO "cart_and_product" (product_fk, cart_fk) VALUES(${nextQuery.rows[0].product_id}, ${result.rows[0].cart_id})`
-					//console.log(addCartQuery)
+					const addCartQuery = `INSERT INTO "cart_and_product" (product_fk, cart_fk) VALUES(${nextQuery.rows[0].product_id}, ${result.rows[0].cart_fk})`
+					console.log(addCartQuery)
 					client
 						.query(addCartQuery)
 						.then(result=>{
@@ -201,12 +223,13 @@ app.post('/user_account', (request, response)=>{
 async function getCartData(userKey){
 	//console.log(userKey)
 	let promise = new Promise((resolve, reject)=>{
-	const cartQuery = `SELECT cart_id FROM cart WHERE user_fk=${userKey}`
+	const cartQuery = `SELECT cart_fk FROM "User" WHERE user_id=${userKey}`
 	client
 		.query(cartQuery)
 		.then(result=>{
-			let cart = result.rows[0].cart_id
-			const cartQuery = `SELECT product.cart_fk, product.company_fk, product.description, product.name, product.order_fk, product.price, product.product_id, product.stock FROM product INNER JOIN cart_and_product ON cart_and_product.product_fk=product.product_id WHERE cart_and_product.cart_fk=${cart}`
+			console.log(result)
+			let cart = result.rows[0].cart_fk
+			const cartQuery = `SELECT product.company_fk, product.description, product.name, product.price, product.product_id, product.stock FROM product INNER JOIN cart_and_product ON cart_and_product.product_fk=product.product_id WHERE cart_and_product.cart_fk=${cart}`
 		client
 			.query(cartQuery)
 			.then(result=>{
@@ -229,12 +252,12 @@ function login(userName, password) {
 	return userSelect;
 }
 function showCart(userId) {
-	const cartSelect = `SELECT product.name, product.price FROM product, cart_and_product, cart WHERE cart.user_fk=${userId} AND cart_and_product.cart_fk=cart.cart_id AND product.cart_fk=cart.cart_id`;
+	const cartSelect = `SELECT product.name, product.price FROM product, cart_and_product WHERE cart_and_product.cart_fk=${userId} AND product.product_id=cart_and_product.product_fk`;
 	return cartSelect;
 }
 function createCart(customerId) {
 	client.query(
-		`INSERT INTO "cart" (user_fk) VALUES(${customerId}) RETURNING *`
+		`INSERT INTO "cart" () VALUES() RETURNING *`
 	);
 }
 
