@@ -1,7 +1,11 @@
 <h3>Shopping Cart</h3>
-<%for(let i=0;i<cartData.length;i++){%>
-	<% for(let item in cartData[i]){ %>
-		<p><%=item%> : <%=cartData[i][item]%></p>
-	<%}%>
+	<% for(let item of cartData){ %>
+		<p>Name : <%=item.name%></p>
+		<p>Description : <%=item.description%></p>
+		<p>Price : $<%=item.price%></p>
+	<form action="" method="post">
+		<input type="hidden" id="cartData" name="cartData" value=<%=item.product_id%>/>
+    	<input type="submit" value="Remove From Cart" />
+	</form>
 	<p>-------------------------------</p>
 <%}%>

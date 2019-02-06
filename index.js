@@ -30,11 +30,20 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '/views'));
 
 app.get('/home', (request, response) => {
-	response.render('main', { error: errorFlag });
+	response.render('main', { notLogged: false, error: errorFlag });
 });
 
 app.get('/login', (request, response) => {
-	response.render('login', { error: errorFlag });
+	let stopFlag = false
+	for(let i = 0;i<loggedIn.length;i++){
+		if(request.connection.remoteAddress===loggedIn[i].address){
+			stopFlag = true
+			response.render('main', {notLogged: false, error: true})
+		}
+	}
+	if(!stopFlag){
+		response.render('login', { error: errorFlag });
+	}
 });
 
 app.get('/product_catalog', (request, response) => {
@@ -43,10 +52,12 @@ app.get('/product_catalog', (request, response) => {
 		.then(result => {
 			products = result.rows;
 		})
+		.then(result=>{
+			response.render('product_catalog', { products });
+		})
 		.catch(error => {
 			console.log(error.stack);
 		});
-	response.render('product_catalog', { products });
 });
 
 app.get('/new_user', (request, response) => {
@@ -61,18 +72,36 @@ app.get('/add_a_product', (request, response) => {
 	response.render('new_product', { error: errorFlag });
 });
 app.get('/user_account', (request, response)=>{
-	for(let user of loggedIn){
-		if(user.address===request.connection.remoteAddress){
-			const userQuery = `SELECT * FROM "User" WHERE user_id=${user.user_id}`
-			client
-				.query(userQuery)
-				.then(result=>{
-					let newCartData = getCartData(user.user_id).then(gcdresult=>{
-						response.render('user_account', {user: result.rows[0], cartData: gcdresult.rows})
+	let loggedInFlag = false
+	for(let i = 0;i<loggedIn.length;i++){
+		if(loggedIn[i].address===request.connection.remoteAddress)
+			loggedInFlag = true
+	}
+	if(loggedInFlag){
+		for(let user of loggedIn){
+			if(user.address===request.connection.remoteAddress){
+				const userQuery = `SELECT * FROM "User" WHERE user_id=${user.user_id}`
+				client
+					.query(userQuery)
+					.then(result=>{
+						let newCartData = getCartData(user.user_id).then(gcdresult=>{
+							response.render('user_account', {user: result.rows[0], cartData: gcdresult.rows})
+						})
 					})
-				})
+			}
 		}
 	}
+	else{
+		response.render('main', {notLogged: true, error: false})
+	}
+})
+app.get('/user_account/logout', (request, response)=>{
+	for(let i = 0;i<loggedIn.length;i++){
+		if(request.connection.remoteAddress===loggedIn[i].address){
+			loggedIn.splice(i, 1)
+		}
+	}
+	response.redirect('/home')
 })
 
 app.post('/login', (request, response) => {
@@ -90,10 +119,7 @@ app.post('/login', (request, response) => {
 				client
 					.query(shoppingCart)
 					.then(result => {
-						response.render('user_account', {
-							user: next.rows[0],
-							cartData: result.rows
-						});
+						response.redirect('user_account');
 					})
 					.catch(error => {
 						response.send('Something Went Wrong :(');
@@ -126,7 +152,7 @@ app.post('/product_catalog', (request, response)=>{
 				.query(userCartQuery)
 				.then(result=>{
 					const addCartQuery = `INSERT INTO "cart_and_product" (product_fk, cart_fk) VALUES(${nextQuery.rows[0].product_id}, ${result.rows[0].cart_id})`
-					console.log(addCartQuery)
+					//console.log(addCartQuery)
 					client
 						.query(addCartQuery)
 						.then(result=>{
@@ -156,6 +182,22 @@ app.post('/new_user', (request, response) => {
 app.post('/register_company', (request, response) => {
 	readBody(request, response, companyQuery, 'new_company');
 });
+app.post('/user_account', (request, response)=>{
+	for(let item in request.body){
+		let toRemove = request.body[item].slice(0, -1);
+		let removeFromCartQuery = `DELETE FROM cart_and_product WHERE product_fk=${toRemove}`
+		client
+			.query(removeFromCartQuery)
+			.then(result=>{
+				console.log("Successfully removed item from cart!")
+			})
+			.catch(error=>{
+				console.log(error.stack)
+				response.send("Something Went Wrong :(")
+			})
+	}
+	response.redirect('/home')
+})
 async function getCartData(userKey){
 	//console.log(userKey)
 	let promise = new Promise((resolve, reject)=>{
@@ -205,7 +247,7 @@ function readBody(request, response, query, errorPage, callback) {
 		.then(result => {
 			if (typeof callback === 'function')
 				callback(result.rows[0].user_id);
-			response.render('main', { error: errorFlag });
+			response.render('main', { notLogged: false, error: errorFlag });
 			values = [];
 		})
 		.catch(error => {

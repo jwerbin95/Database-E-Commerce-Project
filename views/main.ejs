@@ -5,6 +5,12 @@
 	<link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
+	<% if(error){ %>
+		<%- include('existingSession'); %>
+	<% } %>
+	<% if(notLogged){ %>
+		<%- include('not_logged'); %>
+	<% } %>
 	<h3>Shopping App</h3>
 	<a href="/new_user">Create An Account</a>
 	<a href="/product_catalog">Product Catalog</a>
@@ -12,5 +18,6 @@
 	<a href="/add_a_product">Add A New Product</a>
 	<a href="/login">Login</a>
 	<a href="/user_account">Profile</a>
+	<a href="/user_account/logout">Logout</a>
 </body>
 </html>
