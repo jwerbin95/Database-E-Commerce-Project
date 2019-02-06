@@ -1,10 +1,19 @@
+//**********************************************************
+//Author: Jacob Werbin
+//Description: Backend for E-Commerce Website
+//Modified: Feb 6, 2019
+//**********************************************************
+
+//**********************************************************
+//File Imports
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
 const { Client } = require('pg');
-const connectionString = 'postgresql://localhost:5432/E-Commerce';
-const client = new Client({ connectionString });
+//**********************************************************
 
+//**********************************************************
+//Independent Queries to manage database
 const userQuery =
 	'INSERT INTO "User" (user_name, password, email, phone_number, credit_card_number, address) VALUES($1, $2, $3, $4, $5, $6) RETURNING *';
 const companyQuery =
@@ -13,14 +22,23 @@ const productQuery =
 	'INSERT INTO "product" (name, company_fk, description, price) VALUES($1, $2, $3, $4) RETURNING *';
 const productsSelect =
 	'SELECT product.product_id, company.name as cname, product.name as pname, product.price, product.description, product.stock FROM product INNER JOIN company ON product.company_fk=company.company_id';
-const PORT = 3000;
+//***********************************************************
 
+//***********************************************************
+//Data Structure, most variables are created within the scope of the gets/posts
+const PORT = 3000;
 const loggedIn = []
+const connectionString = 'postgresql://localhost:5432/E-Commerce';
+const client = new Client({ connectionString });
+
 let values = [];
 let app = express();
 let errorFlag = false;
 let products = [];
+//***********************************************************
 
+//***********************************************************
+//Middleware
 client.connect();
 
 app.use(express.static('public'));
@@ -28,7 +46,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '/views'));
+//***********************************************************
 
+//***********************************************************
+//Get requests
 app.get('/', (request, response)=>{
 	response.redirect('/home')
 })
@@ -75,6 +96,7 @@ app.get('/register_company', (request, response) => {
 app.get('/add_a_product', (request, response) => {
 	response.render('new_product', { error: errorFlag });
 });
+
 app.get('/user_account', (request, response)=>{
 	let loggedInFlag = false
 	for(let i = 0;i<loggedIn.length;i++){
@@ -99,6 +121,7 @@ app.get('/user_account', (request, response)=>{
 		response.render('main', {notLogged: true, error: false})
 	}
 })
+
 app.get('/user_account/logout', (request, response)=>{
 	for(let i = 0;i<loggedIn.length;i++){
 		if(request.connection.remoteAddress===loggedIn[i].address){
@@ -107,9 +130,14 @@ app.get('/user_account/logout', (request, response)=>{
 	}
 	response.redirect('/home')
 })
+
 app.get('/edit_profile', (request, response)=>{
 	response.render('edit_user')
 })
+//**********************************************************
+
+//**********************************************************
+//post requests
 app.post('/edit_profile', (request, response)=>{
 	for(let user of loggedIn){
 		if(user.address===request.connection.remoteAddress){
@@ -243,11 +271,9 @@ app.post('/product_catalog', (request, response)=>{
 				.query(userCartQuery)
 				.then(result=>{
 					const addCartQuery = `INSERT INTO "cart_and_product" (product_fk, cart_fk) VALUES(${nextQuery.rows[0].product_id}, ${result.rows[0].cart_fk})`
-					console.log(addCartQuery)
 					client
 						.query(addCartQuery)
 						.then(result=>{
-						//console.log(result)
 						response.redirect('/user_account')
 				})
 				.catch(error=>{
@@ -289,14 +315,17 @@ app.post('/user_account', (request, response)=>{
 	}
 	response.redirect('/home')
 })
+//**********************************************************
+
+//**********************************************************
+//Following function responsible for returning data within a users shopping cart
+//function had to be asynchronus to wait for the function to resolve
 async function getCartData(userKey){
-	//console.log(userKey)
 	let promise = new Promise((resolve, reject)=>{
 	const cartQuery = `SELECT cart_fk FROM "User" WHERE user_id=${userKey}`
 	client
 		.query(cartQuery)
 		.then(result=>{
-			console.log(result)
 			let cart = result.rows[0].cart_fk
 			const cartQuery = `SELECT product.company_fk, product.description, product.name, product.price, product.product_id, product.stock FROM product INNER JOIN cart_and_product ON cart_and_product.product_fk=product.product_id WHERE cart_and_product.cart_fk=${cart}`
 		client
@@ -315,7 +344,10 @@ async function getCartData(userKey){
 	let returnValue = await promise;
 	return returnValue
 }
+//**********************************************************
 
+//**********************************************************
+//SQL Queries nested within functions for custom input
 function login(userName, password) {
 	let userSelect = `SELECT user_id, user_name, email, phone_number, address FROM "User" WHERE user_name='${userName}' AND password='${password}'`;
 	return userSelect;
@@ -326,10 +358,13 @@ function showCart(userId) {
 }
 function createCart(customerId) {
 	client.query(
-		`INSERT INTO "cart" () VALUES() RETURNING *`
+		`INSERT INTO "cart" () VALUES() RETURNING *` //Create a new cart when users are created, cart has no columns besides a primary key
 	);
 }
+//**********************************************************
 
+//**********************************************************
+//Function responsible for reading the HTTP body using body-parser
 function readBody(request, response, query, errorPage, callback) {
 	for (let item in request.body)
 		if (request.body[item] === '') values.push(null);
@@ -350,6 +385,11 @@ function readBody(request, response, query, errorPage, callback) {
 			values = [];
 		});
 }
+//**********************************************************
+
+//**********************************************************
+//Server Start
 app.listen(PORT, (request, response) => {
 	console.log('Server started on port: ' + PORT);
 });
+//**********************************************************
