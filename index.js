@@ -29,6 +29,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '/views'));
 
+app.get('/', (request, response)=>{
+	response.redirect('/home')
+})
+
 app.get('/home', (request, response) => {
 	response.render('main', { notLogged: false, error: errorFlag });
 });
@@ -111,6 +115,71 @@ app.post('/edit_profile', (request, response)=>{
 		if(user.address===request.connection.remoteAddress){
 			if(request.body['User Name']!=""){
 				let updateUser = `UPDATE "User" SET user_name='${request.body['User Name']}' WHERE user_id=${user.user_id}`
+				client
+					.query(updateUser)
+					.then(result=>{
+						console.log("Successfully updated user!")
+						response.redirect('/user_account')
+					})
+					.catch(error=>{
+						console.log(error.stack)
+						response.send("Something Went Wrong :(")
+					})
+			}
+			if(request.body['Password']!=""){
+				updateUser = `UPDATE "User" SET password='${request.body['Password']}' WHERE user_id=${user.user_id}`
+				client
+					.query(updateUser)
+					.then(result=>{
+						console.log("Successfully updated user!")
+						response.redirect('/user_account')
+					})
+					.catch(error=>{
+						console.log(error.stack)
+						response.send("Something Went Wrong :(")
+					})
+			}
+			if(request.body['Email Address']!=""){
+				updateUser = `UPDATE "User" SET email='${request.body['Email Address']}' WHERE user_id=${user.user_id}`
+				client
+					.query(updateUser)
+					.then(result=>{
+						console.log("Successfully updated user!")
+						response.redirect('/user_account')
+					})
+					.catch(error=>{
+						console.log(error.stack)
+						response.send("Something Went Wrong :(")
+					})
+			}
+			if(request.body['Phone Number']!=""){
+				updateUser = `UPDATE "User" SET phone_number='${request.body['Phone Number']}' WHERE user_id=${user.user_id}`
+				client
+					.query(updateUser)
+					.then(result=>{
+						console.log("Successfully updated user!")
+						response.redirect('/user_account')
+					})
+					.catch(error=>{
+						console.log(error.stack)
+						response.send("Something Went Wrong :(")
+					})
+			}
+			if(request.body['Credit Card']!=""){
+				updateUser = `UPDATE "User" SET credit_card_number='${request.body['Credit Card']}' WHERE user_id=${user.user_id}`
+				client
+					.query(updateUser)
+					.then(result=>{
+						console.log("Successfully updated user!")
+						response.redirect('/user_account')
+					})
+					.catch(error=>{
+						console.log(error.stack)
+						response.send("Something Went Wrong :(")
+					})
+			}
+			if(request.body['Address']!=""){
+				updateUser = `UPDATE "User" SET address='${request.body['Address']}' WHERE user_id=${user.user_id}`
 				client
 					.query(updateUser)
 					.then(result=>{
