@@ -226,6 +226,7 @@ app.post('/edit_profile', (request, response)=>{
 		}
 	}
 })
+
 app.post('/login', (request, response) => {
 	let credentials = login(
 		request.body['User Name'],
@@ -257,6 +258,7 @@ app.post('/login', (request, response) => {
 			errorFlag = false;
 		});
 });
+
 app.post('/product_catalog', (request, response)=>{
 	let cartData = request.body['cartData']
 	let userId = null;
@@ -292,6 +294,7 @@ app.post('/product_catalog', (request, response)=>{
 			response.send("Something Went Wrong :(")
 		})
 })
+
 app.post('/add_a_product', (request, response) => {
 	readBody(request, response, productQuery, 'new_product');
 });
@@ -303,6 +306,7 @@ app.post('/new_user', (request, response) => {
 app.post('/register_company', (request, response) => {
 	readBody(request, response, companyQuery, 'new_company');
 });
+
 app.post('/user_account', (request, response)=>{
 	for(let item in request.body){
 		let toRemove = request.body[item].slice(0, -1);
@@ -356,10 +360,12 @@ function login(userName, password) {
 	let userSelect = `SELECT user_id, user_name, email, phone_number, address FROM "User" WHERE user_name='${userName}' AND password='${password}'`;
 	return userSelect;
 }
+
 function showCart(userId) {
 	const cartSelect = `SELECT product.name, product.price FROM product, cart_and_product WHERE cart_and_product.cart_fk=${userId} AND product.product_id=cart_and_product.product_fk`;
 	return cartSelect;
 }
+
 function createCart(customerId) {
 	client.query(
 		`INSERT INTO "cart" () VALUES() RETURNING *` //Create a new cart when users are created, cart has no columns besides a primary key
