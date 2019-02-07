@@ -10,4 +10,4 @@
 
 <p>Server will log to the server_log file using morgan and currently runs on port 3000. Wireframe built using Pencil.</p>
 
-<p>Instead of running a client-app like Axios or node-fetch, I decided to user EJS views to display CRUD operations.</p>
+<p>Instead of running a client-app like Axios or node-fetch, I decided to use EJS views to display CRUD operations.</p>
