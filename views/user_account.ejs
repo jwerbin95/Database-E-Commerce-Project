@@ -8,7 +8,7 @@
 	<% for(let item in user){ %>
 		<p><%=item%> : <%=user[item]%></p>
 	<%}%>
-	<%- include('cart', {cartData})%>
+	<%- include('partials/cart', {cartData})%>
 	<a href="/edit_profile">Edit Profile</a>
 	<a href="/home">Home</a>
 </body>

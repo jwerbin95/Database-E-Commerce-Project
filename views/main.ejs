@@ -6,10 +6,10 @@
 </head>
 <body>
 	<% if(error){ %>
-		<%- include('existingSession'); %>
+		<%- include('partials/existingSession'); %>
 	<% } %>
 	<% if(notLogged){ %>
-		<%- include('not_logged'); %>
+		<%- include('partials/not_logged'); %>
 	<% } %>
 	<h3>Shopping App</h3>
 	<a href="/new_user">Create An Account</a>
