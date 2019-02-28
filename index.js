@@ -12,15 +12,41 @@ const path = require('path');
 const { Client } = require('pg');
 const morgan = require('morgan')
 const fs = require('fs')
+const cors = require('cors')
+const jwt = require('express-jwt');
+const jwksRsa = require('jwks-rsa');
 //**********************************************************
 
 //**********************************************************
 //Static Queries to manage database
-const users = 'SELECT * FROM "User"'
+const deleteFromCart = {
+	name: 'remove-from-cart',
+	text: 'DELETE FROM cart_and_product USING "User" WHERE cart_and_product.cart_fk = "User".cart_fk AND "User".connection=$1 AND cart_and_product.product_fk = $2',
+	values: []
+}
+const editUser = {
+		name:'update-user',
+		text:'UPDATE "User" SET user_name=$1, email=$2 WHERE connection=$3',
+		values: []
+}
+const user = {
+	name:"user-query",
+	text:'SELECT * FROM "User" WHERE connection=$1',
+	values: []
+}
 const products = 'SELECT * FROM product'
 const companies = 'SELECT * FROM company'
-const carts = 'SELECT * FROM cart'
+const cart = {
+	name:'cart-query',
+	text: 'SELECT product.name, product.price, product_id FROM product, cart_and_product, "User" WHERE "User".connection = $1 AND cart_and_product.product_fk=product_id AND "User".cart_fk=cart_and_product.cart_fk',
+	values:[]
+}
 
+const addToCart = {
+	name:'add-to-cart',
+	text:'INSERT INTO cart_and_product(product_fk, cart_fk) VALUES($1, $2)',
+	values: []
+}
 const insertUser = 'INSERT INTO "User"(user_name, password, email, phone_number, credit_card_number, address) VALUES($1, $2, $3, $4, $5, $6)'
 const insertCompany = 'INSERT INTO company(name, description) VALUES($1, $2)'
 const insertProduct = 'INSERT INTO product(company_fk, name, description, price, stock) VALUES($1, $2, $3, $4, $5)'
@@ -41,7 +67,10 @@ let accessLogStream = fs.createWriteStream(path.join(__dirname, 'server_log.log'
 //Middleware
 client.connect();
 
+app.use(cors({}))
+
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json())
 app.use(morgan('combined', { stream: accessLogStream }))
 //***********************************************************
 
@@ -56,13 +85,15 @@ app.get('/products', async(request, response) => {
 	response.json(data)
 });
 
-app.get('/users', async(request, response) => {
-	let result = await queryDB(users, null)
+app.get('/user/:id', async(request, response) => {
+	user.values.push(request.params.id)
+	let result = await queryDB(user, null)
 	let data = []
 	result.rows.map(item=>{
 		data.push(item)
 	})
 	response.json(data)
+	user.values = []
 });
 
 app.get('/companies', async(request, response)=>{
@@ -74,25 +105,39 @@ app.get('/companies', async(request, response)=>{
 	response.json(data)
 })
 
-app.get('/carts', async(request, response)=>{
-	let result = await queryDB(carts, null)
+app.get('/cart/:id', async(request, response)=>{
+	cart.values.push(request.params.id)
+	let result = await queryDB(cart, null)
 	let data = []
 	result.rows.map(item=>{
 		data.push(item)
 	})
 	response.json(data)
+	cart.values=[]
 });
 //**********************************************************
+const checkJwt = jwt({
+  secret: jwksRsa.expressJwtSecret({
+    cache: true,
+    rateLimit: true,
+    jwksRequestsPerMinute: 5,
+    jwksUri: `https://jw95.auth0.com/.well-known/jwks.json`
+  }),
 
+  // Validate the audience and the issuer.
+  audience: 'vj4D4dlgRoeOiSbTii3BEmFdIQCX0clO',
+  issuer: `https://jw95.auth0.com/`,
+  algorithms: ['RS256']
+});
 //**********************************************************
 //Post Requests
-app.post('/new_product', async(request, response) => {
-	let values = []
+app.post('/add_to_cart', async(request, response) => {
 	for(let item in request.body){
-		values.push(request.body[item])
+		addToCart.values.push(parseInt(request.body[item]))
 	}
-	let queried = await queryDB(insertProduct, values)
-	response.send("Successfully Added New product!")
+	let queried = await queryDB(addToCart, null)
+	addToCart.values=[]
+	response.json(queried)
 });
 
 app.post('/new_user', async(request, response) => {
@@ -101,7 +146,16 @@ app.post('/new_user', async(request, response) => {
 		values.push(request.body[item])
 	}
 	let queried = await queryDB(insertUser, values)
-	response.send("Successfully Added New User!")
+	response.json(queried)
+});
+
+app.post('/new_product', async(request, response) => {
+	let values = []
+	for(let item in request.body){
+		values.push(request.body[item])
+	}
+	let queried = await queryDB(insertProduct, values)
+	response.json(queried)
 });
 
 app.post('/new_company', async(request, response) => {
@@ -110,68 +164,38 @@ app.post('/new_company', async(request, response) => {
 		values.push(request.body[item])
 	}
 	let queried = await queryDB(insertCompany, values)
-	response.send("Successfully Added New Company!")
+	response.json(queried)
 });
 //**********************************************************
 
 //**********************************************************
 //Put Requests
 app.put('/edit_user/:id', async(request, response)=>{
-	let values = []
 	for(let item in request.body){
-		values.push(request.body[item])
+		editUser.values.push(request.body[item])
 	}
-	const editUser = `PREPARE query(INT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, INT) AS UPDATE "User" SET user_name=$2, password=$3, email=$4, phone_number=$5, credit_card_number=$6, address=$7, cart_fk=$8 WHERE user_id=$1; EXECUTE query(${request.params.id}, '${values[0]}', '${values[1]}', '${values[2]}', '${values[3]}', '${values[4]}', '${values[5]}', ${values[6]}); DEALLOCATE query;`
-	client
-		.query(editUser)
-		.then(result=>{
-			response.json(result)
-		})
-});
-
-app.put('/edit_company/:id', (request, response)=>{
-	let values = []
-	for(let item in request.body){
-		values.push(request.body[item])
-	}
-	const editCompany = `PREPARE query(INT, TEXT, TEXT) AS UPDATE company SET name=$2, description=$3 WHERE company_id=$1; EXECUTE query(${request.params.id}, '${values[0]}', '${values[1]}'); DEALLOCATE query;`
-	client
-		.query(editCompany)
-		.then(result=>{
-			response.json(result)
-		})
-});
-
-app.put('/edit_product/:id', (request, response)=>{
-	let values = []
-	for(let item in request.body){
-		values.push(request.body[item])
-	}
-	const editProduct = `PREPARE query(INT, INT, TEXT, TEXT, NUMERIC, INT) AS UPDATE product SET company_fk=$2, name=$3, description=$4, price=$5, stock=$6 WHERE product_id=$1; EXECUTE query(${request.params.id}, '${values[0]}', '${values[1]}', '${values[2]}', ${values[3]}, ${values[4]}); DEALLOCATE query;`
-	client
-		.query(editProduct)
-		.then(result=>{
-			response.json(result)
-		})
+	editUser.values.push(request.params.id)
+	let queried = await queryDB(editUser, null)
+	editUser.values=[]
+	response.json(queried)
 });
 //**********************************************************
 
 //**********************************************************
 //Delete Requests
-app.delete('/delete_user/:id', (request, response)=>{
-	deleteRow(request.params.id, "\"User\"", response)
-});
-
-app.delete('/delete_company/:id', (request, response)=>{
-	deleteRow(request.params.id, "company", response)
-});
-
-app.delete('/delete_product/:id', (request, response)=>{
-	deleteRow(request.params.id, "product", response)
-});
-
-app.delete('/delete_product_from_cart/:id', (request, response)=>{
-	deleteRow(request.params.id, "cart_and_product", response)
+app.delete('/remove_from_cart', async(request, response)=>{
+	for(let item in request.body){
+		deleteFromCart.values.push(request.body[item])
+	}
+	let queried = await queryDB(deleteFromCart, null)
+		.then(data=>{
+			console.log("Database has been queried for delete request.")
+		})
+		.catch(error=>{
+			console.log(error.stack)
+		})
+	deleteFromCart.values=[]
+	response.json(queried)
 });
 //**********************************************************
 
@@ -184,7 +208,11 @@ function queryDB(query, values){
 				.query(query)
 				.then(result=>{
 					resolve(result)
+
 			})
+				.catch(error=>{
+					console.log(error.stack)
+				})
 		}
 		else{
 			client
@@ -192,6 +220,9 @@ function queryDB(query, values){
 				.then(result=>{
 					resolve(result)
 			})
+				.catch(error=>{
+					console.log(error.stack)
+				})
 		}
 	})
 	return promise

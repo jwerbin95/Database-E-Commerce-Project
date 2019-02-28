@@ -18,8 +18,11 @@
   "homepage": "https://github.com/jwerbin95/Database-E-Commerce-Project#readme",
   "dependencies": {
     "body-parser": "^1.18.3",
+    "cors": "^2.8.5",
     "ejs": "^2.6.1",
     "express": "^4.16.4",
+    "express-jwt": "^5.3.1",
+    "jwks-rsa": "^1.4.0",
     "morgan": "^1.9.1",
     "nodemon": "^1.18.9",
     "pg": "^7.8.0"
